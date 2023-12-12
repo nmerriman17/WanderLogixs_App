@@ -11,6 +11,28 @@ const pool = new Pool({
     port: process.env.DB_PORT,
 });
 
+
+// Database connection setup
+let poolConfig;
+
+if (process.env.NODE_ENV === 'production') {
+    // In production (on Heroku), use DATABASE_URL
+    poolConfig = {
+        connectionString: process.env.DATABASE_URL,
+        ssl: {
+            rejectUnauthorized: false // Required for Heroku
+        }
+    };
+} else {
+    // In development, use local database configuration
+    poolConfig = {
+        user: process.env.DB_USER, 
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        password: process.env.DB_PASS,
+        port: process.env.DB_PORT,
+    };
+}
 // Function for full-text search in the database
 const searchDatabase = async (term) => {
     try {
