@@ -1,0 +1,189 @@
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+  'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+  sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  min-height: 300vh; /* Use min-height to ensure it covers longer content */
+  background: linear-gradient(#2E454E, #7794A6);
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+  monospace;
+}
+
+.trips-form-container {
+  display: flex;
+  flex-direction: column;
+  margin: auto;
+  margin-top: 100px;
+  width: 700px;
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.trips-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  margin-top: 40px;
+}
+
+.trips-text {
+  color: #A6530A;
+  font-size: 48px;
+  font-weight: 700;
+  padding-bottom: 10px;
+
+}
+
+.underline {
+  width: 61px;
+  height: 6px;
+  background: #A6530A;
+  border-radius: 9px;
+}
+
+.inputs {
+  margin-top: 55px;
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  margin: auto;
+  width: 480px;
+  background: #eaeaea;
+  border-radius: 6px;
+  padding: 10px;
+}
+
+.input textarea {
+  resize: none;
+  height: 100px; 
+  overflow-y: auto;
+}
+
+.input input, .input textarea {
+  width: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  color: #797979;
+  font-size: 19px;
+  padding: 10px;
+}
+
+.btn.trip-btn-primary {
+  background: #A6530A;
+  color: white;
+  border: 1px solid #A6530A;
+  padding: 13px 35px;
+  width: 180px;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background 0.3s linear, color 0.3s linear;
+}
+
+.btn.trip-btn-primary:hover {
+  background: white;
+  color: #A6530A;
+}
+
+.btn.trip-btn-secondary {
+  background: #2E454E;
+  border-color: #2E454E;
+  color: white;
+  padding: 13px 35px;
+  width: 125px;
+  font-size: 14px;
+  line-height: 18px;
+  font-weight: 600;
+  text-transform: uppercase;
+  transition: background 0.3s linear, color 0.3s linear;
+}
+
+.btn.trip-btn-secondary:hover {
+  background: white;
+  color: #2E454E;
+}
+
+.trips-submit-container {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 40px auto;
+  flex-wrap: wrap;
+}
+
+.trips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  justify-content: center;
+  padding: 20px;
+}
+.trips-display {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-around;
+}
+
+.trip-card {
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  overflow: hidden;
+  width: 300px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  flex: 0 1 calc(33% - 1em); /* 3 cards per row, with some spacing */
+    margin-bottom: 1em;
+}
+
+.trip-info {
+  padding: 15px;
+}
+
+.trip-info h3 {
+  margin-top: 0;
+  color: #333;
+}
+
+.trip-media {
+  width: 100%;
+  overflow: hidden;
+}
+
+.trip-media img {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .trips-form-container {
+      width: 95%;
+      padding: 20px;}
+  .input textarea {
+       height: 80px;
+  }
+
+  .input {
+      flex-direction: column;
+  }
+
+  .input input, .input textarea {
+      width: 100%;
+  }
+}

@@ -1,0 +1,39 @@
+.dashboard-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+    padding: 20px;
+  }
+  
+  .dashboard-section {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  
+  .upcoming-trips, 
+  .activity-feed, 
+  .weather-widget, 
+  .travel-tips, 
+  .emergency-info {
+    padding: 15px;
+    border-radius: 10px;
+    box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
+    background-color: #fff;
+  }
+  
+  @media (max-width: 768px) {
+    .dashboard-container {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .dashboard-container a {
+    color: #007bff;
+    text-decoration: none;
+  }
+  
+  .dashboard-container a:hover {
+    text-decoration: underline;
+  }
+  

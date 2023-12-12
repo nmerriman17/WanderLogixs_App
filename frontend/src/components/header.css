@@ -1,0 +1,50 @@
+.custom-nav-spacing {
+    margin-right: 10px;
+}
+
+/* Large screen adjustments */
+@media (min-width: 992px) {
+    .navbar-collapse {
+        justify-content: center;
+    }
+}
+
+/* Styles specific for small screens */
+@media (max-width: 991px) {
+    .navbar-collapse {
+        width: 100%; /* Full width for dropdown */
+        background-color: #f8f9fa; /* Light background for dropdown */
+    }
+
+    .nav-link {
+        padding: 10px 15px; /* Increased padding for touch targets */
+        font-size: 16px; /* Larger font size for readability */
+        display: block; /* Each link takes full width */
+    }
+}
+
+.rounded-button {
+    border-radius: 50px;
+}
+
+.container {
+    display: flex;
+    flex-direction: column;
+    margin: auto;
+    margin-top: 10px;
+    width: 100%;
+    border-radius: 50px;
+    max-height: 40vh;
+    background: #fff;
+    padding-bottom: 30px;
+}
+
+.header-light-blue-logo .text {
+    color: #7794A6;
+}
+
+.nav-link:hover {
+    text-decoration: underline;
+    text-decoration-color: #A6530A;
+    text-decoration-thickness: 2px;
+}
