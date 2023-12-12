@@ -2,21 +2,9 @@ const { Pool } = require('pg');
 const bcryptjs = require('bcryptjs');
 require('dotenv').config();
 
-// Database connection setup
-const pool = new Pool({
-    user: process.env.DB_USER, 
-    host: process.env.DB_HOST,
-    database: process.env.DB_NAME,
-    password: process.env.DB_PASS,
-    port: process.env.DB_PORT,
-});
-
-
-// Database connection setup
 let poolConfig;
 
 if (process.env.NODE_ENV === 'production') {
-    // In production (on Heroku), use DATABASE_URL
     poolConfig = {
         connectionString: process.env.DATABASE_URL,
         ssl: {
@@ -24,7 +12,6 @@ if (process.env.NODE_ENV === 'production') {
         }
     };
 } else {
-    // In development, use local database configuration
     poolConfig = {
         user: process.env.DB_USER, 
         host: process.env.DB_HOST,
@@ -33,6 +20,9 @@ if (process.env.NODE_ENV === 'production') {
         port: process.env.DB_PORT,
     };
 }
+
+const pool = new Pool(poolConfig);
+
 // Function for full-text search in the database
 const searchDatabase = async (term) => {
     try {
