@@ -21,7 +21,7 @@ const Loginsignup = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
             localStorage.setItem('token', response.data.token);
-            navigate('/dashboard'); // Adjust the navigation route as needed
+            navigate('/dashboard');
         } catch (err) {
             setError(err.response?.data?.message || 'Something went wrong!');
         }
@@ -29,37 +29,30 @@ const Loginsignup = () => {
 
     return (
         <div className='login-signup-container'>
-            <h2>{isSignup ? 'Sign Up' : 'Login'}</h2>
-            <form onSubmit={handleSubmit}>
+            <div className="header">
+                <div className="text">{isSignup ? 'Sign Up' : 'Login'}</div>
+                <div className="underline"></div>
+            </div>
+            <form onSubmit={handleSubmit} className="inputs">
                 {isSignup && (
-                    <input
-                        type="text"
-                        name="name"
-                        placeholder="Name"
-                        value={credentials.name}
-                        onChange={handleChange}
-                    />
+                    <div className="input">
+                        <input type="text" name="name" placeholder="Name" value={credentials.name} onChange={handleChange} />
+                    </div>
                 )}
-                <input
-                    type="email"
-                    name="email"
-                    placeholder="Email"
-                    value={credentials.email}
-                    onChange={handleChange}
-                />
-                <input
-                    type="password"
-                    name="password"
-                    placeholder="Password"
-                    value={credentials.password}
-                    onChange={handleChange}
-                />
-                <button type="submit">{isSignup ? 'Sign Up' : 'Login'}</button>
+                <div className="input">
+                    <input type="email" name="email" placeholder="Email Address" value={credentials.email} onChange={handleChange} />
+                </div>
+                <div className="input">
+                    <input type="password" name="password" placeholder="Password" value={credentials.password} onChange={handleChange} />
+                </div>
+                <div className="button-container">
+                    <button className="btn btn-primary submit" type="submit">Submit</button>
+                    <button className="btn btn-switch" type="button" onClick={() => setIsSignup(!isSignup)}>
+                        Switch to {isSignup ? 'Login' : 'Sign Up'}
+                    </button>
+                </div>
+                {error && <div className="error-message">{error}</div>}
             </form>
-            {error && <p className="error">{error}</p>}
-            <button onClick={() => setIsSignup(!isSignup)}>
-                Switch to {isSignup ? 'Login' : 'Sign Up'}
-            </button>
         </div>
     );
 };
