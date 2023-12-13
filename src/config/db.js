@@ -1,9 +1,9 @@
 const { Pool } = require('pg');
-const bcryptjs = require('bcryptjs');
 require('dotenv').config();
 
 let poolConfig;
 
+// Configure the pool based on the environment
 if (process.env.NODE_ENV === 'production') {
     poolConfig = {
         connectionString: process.env.DATABASE_URL,
@@ -47,7 +47,7 @@ const searchDatabase = async (term) => {
         const result = await pool.query(query, [term]);
         return result.rows;
     } catch (err) {
-        console.error('Error executing full-text search query', err);
+        console.error('Error executing full-text search query:', err);
         throw err;
     }
 };
@@ -60,9 +60,9 @@ const registerUser = async (name, email, hashedPassword) => {
             'INSERT INTO users (name, email, password) VALUES ($1, $2, $3) RETURNING id, name, email;',
             [name, email, hashedPassword]
         );
-        return result.rows[0]; // returns the new user's id, name, and email
+        return result.rows[0];
     } catch (err) {
-        console.error(err);
+        console.error('Error in registerUser:', err);
         throw err;
     } finally {
         client.release();
@@ -77,9 +77,9 @@ const getUserByEmail = async (email) => {
             'SELECT * FROM users WHERE email = $1;',
             [email]
         );
-        return result.rows[0]; // returns the user if found
+        return result.rows[0];
     } catch (err) {
-        console.error(err);
+        console.error('Error in getUserByEmail:', err);
         throw err;
     } finally {
         client.release();
