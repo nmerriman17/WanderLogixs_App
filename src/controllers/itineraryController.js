@@ -28,7 +28,10 @@ const validateItineraryData = (data) => {
 // Get all itineraries for a specific user
 const getItineraries = async (req, res) => {
     try {
-        const userId = req.userId; // Assumes userId is set by your authentication middleware
+        const userId = req.userId;
+        if (!userId) {
+            return res.status(401).send('Unauthorized access');
+        }
         const itineraries = await ItineraryModel.getAllItineraries(userId);
         res.json(itineraries);
     } catch (error) {

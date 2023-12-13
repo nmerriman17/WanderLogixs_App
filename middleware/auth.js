@@ -1,6 +1,6 @@
 const jwt = require('jsonwebtoken');
 
-const secret = process.env.JWT_SECRET; // Ensure JWT_SECRET is set in your environment
+const secret = process.env.JWT_SECRET; 
 
 const authenticateToken = (req, res, next) => {
     const authHeader = req.headers.authorization;
@@ -23,7 +23,7 @@ const authenticateToken = (req, res, next) => {
 const authorizeRoles = (...allowedRoles) => {
     return (req, res, next) => {
         if (!req.user) {
-            return res.status(403).json({ message: 'Unauthorized.' });
+            return res.status(401).json({ message: 'Unauthorized.' });
         }
 
         const { role } = req.user;

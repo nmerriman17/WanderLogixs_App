@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Calendar from 'react-calendar';
 import 'react-calendar/dist/Calendar.css';
 import * as yup from 'yup';
@@ -30,21 +31,37 @@ function Itinerary() {
         notification: ''
     });
     const [errors, setErrors] = useState({});
-    const [hoveredEvent, setHoveredEvent] = useState(null); // State for hovered event
+    const [hoveredEvent, setHoveredEvent] = useState(null);
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         const fetchEvents = async () => {
+            const token = localStorage.getItem('token');
+            if (!token) {
+                console.error('Authentication token is missing');
+                navigate('/login'); // Redirect to login
+                return;
+            }
+
             try {
                 const response = await fetch('/api/itinerary', {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     },
                 });
+
                 if (!response.ok) {
-                    throw new Error('Network response was not ok');
+                    if (response.status === 403) {
+                        console.error('Token expired or invalid');
+                        navigate('/login'); // Redirect to login
+                    } else {
+                        throw new Error(`Server responded with status: ${response.status}`);
+                    }
                 }
+
                 const data = await response.json();
                 setEvents(data);
             } catch (error) {
@@ -53,7 +70,7 @@ function Itinerary() {
         };
 
         fetchEvents();
-    }, []);
+    }, [navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -66,6 +83,14 @@ function Itinerary() {
 
     const handleSubmit = async (e) => {
         e.preventDefault();
+
+        const token = localStorage.getItem('token');
+        if (!token) {
+            console.error('Authentication token is missing');
+            navigate('/login'); // Redirect to login
+            return;
+        }
+
         try {
             const validatedData = await itinerarySchema.validate(eventForm, { abortEarly: false });
             const eventData = {
@@ -81,16 +106,20 @@ function Itinerary() {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${token}`
                 },
                 body: JSON.stringify(eventData)
             });
 
             if (!response.ok) {
-                const errorData = await response.json();
-                // Handle specific server-side validation errors or other error messages here
-                // Example: setErrors({ serverError: errorData.message });
-                throw new Error('Network response was not ok');
+                if (response.status === 403) {
+                    console.error('Token expired or invalid');
+                    navigate('/login'); // Redirect to login
+                } else {
+                    const errorData = await response.json();
+                    setErrors({ serverError: errorData.message });
+                    throw new Error('Network response was not ok');
+                }
             }
 
             const updatedEvent = await response.json();
@@ -107,7 +136,8 @@ function Itinerary() {
                 setErrors(validationError.inner.reduce((acc, error) => ({
                     ...acc, [error.path]: error.message
                 }), {}));
-            } else {                console.error(validationError.message);
+            } else {
+                console.error(validationError.message);
             }
         }
     };
@@ -147,7 +177,6 @@ function Itinerary() {
             <div className="event-details-tooltip">
                 <p>Event Name: {event.eventName}</p>
                 <p>Location: {event.location}</p>
-
                 {/* Add more details as needed */}
             </div>
         );
