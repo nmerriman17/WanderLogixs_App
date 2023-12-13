@@ -3,7 +3,6 @@ import AppHeader from '../components/header.js';
 import './dashboard.css';
 
 function AppDashboard() {
-  // You might have state hooks here for dynamic content
 
   return (
     <>
