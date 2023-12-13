@@ -51,27 +51,22 @@ const TripsForm = () => {
     const [trips, setTrips] = useState([]);
     const [editingTrip, setEditingTrip] = useState(null);
   
-    // Function to create Axios headers with JWT token
     const createAuthHeaders = () => {
-      const token = localStorage.getItem('token');
-      return {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      };
+        const token = localStorage.getItem('token');
+        return { headers: { Authorization: `Bearer ${token}` } };
     };
-  
-    // Fetch trips from the backend with Authorization header
+    
+    // Fetch trips with Authorization header
     useEffect(() => {
-      axios.get('/api/trips', createAuthHeaders())
-        .then(response => setTrips(response.data))
-        .catch(error => console.error('Error fetching trips', error));
+        axios.get('/api/trips', createAuthHeaders())
+             .then(response => setTrips(response.data))
+             .catch(error => console.error('Error fetching trips', error));
     }, []);
-
+    
   const handleSubmit = (values, { resetForm }) => {
-      const apiCall = editingTrip 
-          ? axios.put(`/api/trips/${editingTrip.id}`, values)
-          : axios.post('/api/trips', values);
+    const apiCall = editingTrip
+        ? axios.put(`/api/trips/${editingTrip.id}`, values, createAuthHeaders())
+        : axios.post('/api/trips', values, createAuthHeaders());
 
       apiCall.then(response => {
           setTrips(editingTrip ? trips.map(trip => trip.id === editingTrip.id ? response.data : trip) : [response.data, ...trips]);

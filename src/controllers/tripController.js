@@ -3,8 +3,8 @@ const { uploadFileToS3 } = require('../config/s3Upload'); // AWS S3 upload utili
 
 const getTrips = async (req, res) => {
     try {
-        // Assuming the user's ID is stored in req.user.id after authentication
-        const userId = req.user.id;
+        // Use req.userId instead of req.userId
+        const userId = req.userId;
         const trips = await TripModel.getAllTrips(userId);
         res.json(trips);
     } catch (error) {
@@ -34,7 +34,7 @@ const createTrip = async (req, res) => {
         }
 
         const tripData = {
-            user_id: req.user.id, // User ID from authentication
+            user_id: req.userId, // User ID from authentication
             ...req.body,
             media_url: mediaUrl
         };
