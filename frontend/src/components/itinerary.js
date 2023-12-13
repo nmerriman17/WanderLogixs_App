@@ -18,6 +18,7 @@ const itinerarySchema = yup.object().shape({
 
 function Itinerary() {
     const [events, setEvents] = useState([]);
+    const [editingEventId, setEditingEventId] = useState(null);
     const [eventForm, setEventForm] = useState({
         eventName: '',
         location: '',
@@ -29,38 +30,34 @@ function Itinerary() {
         notification: ''
     });
     const [errors, setErrors] = useState({});
+    const [hoveredEvent, setHoveredEvent] = useState(null); // State for hovered event
 
     useEffect(() => {
-        fetch('/api/itinerary', {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('token')}` // Token from your authentication process
-            },
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
+        const fetchEvents = async () => {
+            try {
+                const response = await fetch('/api/itinerary', {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                });
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                setEvents(data);
+            } catch (error) {
+                console.error('Error fetching events:', error);
             }
-            return response.json();
-        })
-        .then(data => {
-            setEvents(data);
-        })
-        .catch(error => {
-            console.error('Error fetching itinerary data:', error);
-        });
+        };
+
+        fetchEvents();
     }, []);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        let updatedValue = value;
-
-        if (name === 'startDate' || name === 'endDate') {
-            updatedValue = new Date(value);
-        }
-
-        setEventForm({ ...eventForm, [name]: updatedValue });
+        setEventForm({ ...eventForm, [name]: value });
     };
 
     const formatDateValue = (date) => {
@@ -77,32 +74,50 @@ function Itinerary() {
                 endDate: validatedData.endDate.toISOString()
             };
 
-            fetch('/api/itinerary', {
-                method: 'POST',
+            const method = editingEventId ? 'PUT' : 'POST';
+            const endpoint = editingEventId ? `/api/itinerary/${editingEventId}` : '/api/itinerary';
+
+            const response = await fetch(endpoint, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}` // Token from your authentication process
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify(eventData)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                return response.json();
-            })
-            .then(newEvent => {
-                setEvents(currentEvents => [...currentEvents, newEvent]);
-                resetForm();
-            })
-            .catch(error => {
-                console.error('Error submitting event data:', error);
             });
+
+            if (!response.ok) {
+                throw new Error('Network response was not ok');
+            }
+
+            const updatedEvent = await response.json();
+            if (editingEventId) {
+                setEvents(events.map(event => event.id === editingEventId ? updatedEvent : event));
+            } else {
+                setEvents([...events, updatedEvent]);
+            }
+
+            resetForm();
+            setEditingEventId(null);
         } catch (validationError) {
             setErrors(validationError.inner.reduce((acc, error) => ({
                 ...acc, [error.path]: error.message
             }), {}));
         }
+    };
+
+    const handleEditEvent = (event) => {
+        setEditingEventId(event.id);
+        setEventForm({
+            eventName: event.eventName,
+            location: event.location,
+            startDate: new Date(event.startDate),
+            endDate: new Date(event.endDate),
+            startTime: new Date(event.startDate).toISOString().split('T')[1].substring(0, 5),
+            endTime: new Date(event.endDate).toISOString().split('T')[1].substring(0, 5),
+            description: event.description,
+            notification: event.notification
+        });
     };
 
     const resetForm = () => {
@@ -117,9 +132,20 @@ function Itinerary() {
             notification: ''
         });
         setErrors({});
+        setEditingEventId(null);
     };
 
-    const handleCancel = () => resetForm();
+    const EventDetailsTooltip = ({ event }) => {
+        if (!event) return null;
+        return (
+            <div className="event-details-tooltip">
+                <p>Event Name: {event.eventName}</p>
+                <p>Location: {event.location}</p>
+
+                {/* Add more details as needed */}
+            </div>
+        );
+    };
 
     return (
         <>
@@ -236,14 +262,14 @@ function Itinerary() {
                         
                         <div className="itinerary-submit-container">
                             <button type="submit" className="btn trip-btn-primary submit">Submit</button>
-                            <button type="button" className="btn trip-btn-secondary submit" onClick={handleCancel}>Cancel</button>
+                            <button type="button" className="btn trip-btn-secondary submit" onClick={resetForm}>Cancel</button>
                         </div>
                     </div>
                 </form>
 
                 {/* Calendar Component */}
                 <div className="calendar-container">
-                <Calendar
+                    <Calendar
                         onChange={(value) => setEventForm({ ...eventForm, startDate: value, endDate: value })}
                         value={eventForm.startDate}
                         className="react-calendar"
