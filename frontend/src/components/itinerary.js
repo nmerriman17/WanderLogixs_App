@@ -87,6 +87,9 @@ function Itinerary() {
             });
 
             if (!response.ok) {
+                const errorData = await response.json();
+                // Handle specific server-side validation errors or other error messages here
+                // Example: setErrors({ serverError: errorData.message });
                 throw new Error('Network response was not ok');
             }
 
@@ -100,9 +103,12 @@ function Itinerary() {
             resetForm();
             setEditingEventId(null);
         } catch (validationError) {
-            setErrors(validationError.inner.reduce((acc, error) => ({
-                ...acc, [error.path]: error.message
-            }), {}));
+            if (validationError.inner && Array.isArray(validationError.inner)) {
+                setErrors(validationError.inner.reduce((acc, error) => ({
+                    ...acc, [error.path]: error.message
+                }), {}));
+            } else {                console.error(validationError.message);
+            }
         }
     };
 
