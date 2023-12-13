@@ -48,15 +48,25 @@ const TripCard = ({ trip, onEdit, onDelete }) => {
 };
 
 const TripsForm = () => {
-  const [trips, setTrips] = useState([]);
-  const [editingTrip, setEditingTrip] = useState(null);
-
-  // Fetch trips from the backend
-  useEffect(() => {
-      axios.get('/api/trips')
-           .then(response => setTrips(response.data))
-           .catch(error => console.error('Error fetching trips', error));
-  }, []);
+    const [trips, setTrips] = useState([]);
+    const [editingTrip, setEditingTrip] = useState(null);
+  
+    // Function to create Axios headers with JWT token
+    const createAuthHeaders = () => {
+      const token = localStorage.getItem('token');
+      return {
+        headers: {
+          Authorization: `Bearer ${token}`
+        }
+      };
+    };
+  
+    // Fetch trips from the backend with Authorization header
+    useEffect(() => {
+      axios.get('/api/trips', createAuthHeaders())
+        .then(response => setTrips(response.data))
+        .catch(error => console.error('Error fetching trips', error));
+    }, []);
 
   const handleSubmit = (values, { resetForm }) => {
       const apiCall = editingTrip 
@@ -75,11 +85,11 @@ const TripsForm = () => {
   };
 
   const handleDelete = (tripToDelete) => {
-      axios.delete(`/api/trips/${tripToDelete.id}`)
-           .then(() => {
-               setTrips(trips.filter(trip => trip.id !== tripToDelete.id));
-           })
-           .catch(error => console.error('Error deleting trip', error));
+    axios.delete(`/api/trips/${tripToDelete.id}`, createAuthHeaders())
+      .then(() => {
+        setTrips(trips.filter(trip => trip.id !== tripToDelete.id));
+      })
+      .catch(error => console.error('Error deleting trip', error));
   };
 
   return (

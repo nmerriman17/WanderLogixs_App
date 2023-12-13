@@ -20,8 +20,14 @@ const Loginsignup = () => {
             const response = await axios.post(endpoint, credentials, {
                 headers: { 'Content-Type': 'application/json' }
             });
-            localStorage.setItem('token', response.data.token);
-            navigate('/dashboard');
+    
+            // Storing the token in local storage
+            if (response.data.token) {
+                localStorage.setItem('token', response.data.token);
+                navigate('/dashboard');
+            } else {
+                throw new Error('Token not received');
+            }
         } catch (err) {
             setError(err.response?.data?.message || 'Something went wrong!');
         }
