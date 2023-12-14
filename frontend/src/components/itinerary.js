@@ -43,7 +43,7 @@ function Itinerary() {
                 navigate('/login'); // Redirect to login
                 return;
             }
-
+    
             try {
                 const response = await fetch('/api/itinerary', {
                     method: 'GET',
@@ -52,25 +52,34 @@ function Itinerary() {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-
+    
                 if (!response.ok) {
+                    // Attempt to parse JSON response, but handle cases where response is not JSON
+                    let errorData;
+                    try {
+                        errorData = await response.json();
+                    } catch (jsonError) {
+                        errorData = { message: response.statusText };
+                    }
+    
                     if (response.status === 403) {
-                        console.error('Token expired or invalid');
+                        console.error('Token expired or invalid', errorData);
                         navigate('/login'); // Redirect to login
                     } else {
-                        throw new Error(`Server responded with status: ${response.status}`);
+                        console.error(`Server responded with status: ${response.status}`, errorData);
+                        // Optionally update state with error message for user feedback
                     }
+                } else {
+                    const data = await response.json();
+                    setEvents(data);
                 }
-
-                const data = await response.json();
-                setEvents(data);
             } catch (error) {
                 console.error('Error fetching events:', error);
             }
         };
-
+    
         fetchEvents();
-    }, [navigate]);
+    }, [navigate, setEvents]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
