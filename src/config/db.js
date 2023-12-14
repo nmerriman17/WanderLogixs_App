@@ -2,14 +2,10 @@ const { Pool } = require('pg');
 require('dotenv').config();
 
 let poolConfig;
-
-// Configure the pool based on the environment
 if (process.env.NODE_ENV === 'production') {
     poolConfig = {
         connectionString: process.env.DATABASE_URL,
-        ssl: {
-            rejectUnauthorized: false // Required for Heroku
-        }
+        ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : { rejectUnauthorized: true }
     };
 } else {
     poolConfig = {
@@ -87,6 +83,7 @@ const getUserByEmail = async (email) => {
 };
 
 module.exports = {
+    pool,
     searchDatabase,
     registerUser,
     getUserByEmail
