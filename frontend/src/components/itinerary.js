@@ -10,7 +10,7 @@ const itinerarySchema = yup.object().shape({
     eventName: yup.string().required('Event name is required'),
     location: yup.string().required('Location is required'),
     startDate: yup.date().required('Start date is required').max(yup.ref('endDate'), 'Start date must be before end date'),
-    endDate: yup.date().required('End date is required'),
+    endDate: yup.date().required('End date is required').min(yup.ref('startDate'), 'End date must be after start date'),
     startTime: yup.string().required('Start time is required'),
     endTime: yup.string().required('End time is required'),
     description: yup.string(),
@@ -31,8 +31,6 @@ function Itinerary() {
         notification: ''
     });
     const [errors, setErrors] = useState({});
-    const [hoveredEvent, setHoveredEvent] = useState(null);
-
     const navigate = useNavigate();
 
     useEffect(() => {
@@ -83,7 +81,11 @@ function Itinerary() {
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        setEventForm({ ...eventForm, [name]: value });
+        if (name === "startDate" || name === "endDate") {
+            setEventForm({ ...eventForm, [name]: new Date(value) });
+        } else {
+            setEventForm({ ...eventForm, [name]: value });
+        }
     };
 
     const formatDateValue = (date) => {
@@ -102,10 +104,11 @@ function Itinerary() {
 
         try {
             const validatedData = await itinerarySchema.validate(eventForm, { abortEarly: false });
+            // Ensure dates are formatted correctly
             const eventData = {
                 ...validatedData,
-                startDate: validatedData.startDate.toISOString(),
-                endDate: validatedData.endDate.toISOString()
+                startDate: validatedData.startDate.toISOString().split('T')[0],
+                endDate: validatedData.endDate.toISOString().split('T')[0]
             };
 
             const method = editingEventId ? 'PUT' : 'POST';
@@ -158,8 +161,8 @@ function Itinerary() {
             location: event.location,
             startDate: new Date(event.startDate),
             endDate: new Date(event.endDate),
-            startTime: new Date(event.startDate).toISOString().split('T')[1].substring(0, 5),
-            endTime: new Date(event.endDate).toISOString().split('T')[1].substring(0, 5),
+            startTime: event.startTime,
+            endTime: event.endTime,
             description: event.description,
             notification: event.notification
         });
@@ -190,6 +193,9 @@ function Itinerary() {
             </div>
         );
     };
+    
+    const [hoveredEvent, setHoveredEvent] = useState(null);
+
 
     return (
         <>
@@ -313,32 +319,34 @@ function Itinerary() {
 
                 {/* Calendar Component */}
                 <div className="calendar-container">
-                    <Calendar
-                        onChange={(value) => setEventForm({ ...eventForm, startDate: value, endDate: value })}
-                        value={eventForm.startDate}
-                        className="react-calendar"
-                        calendarType="US"
-                        tileContent={({ date, view }) => view === 'month' && events.map((event) => {
-                            const start = new Date(event.startDate);
-                            const end = new Date(event.endDate);
-                            if (date >= start && date <= end) {
-                                return (
-                                    <div 
-                                        key={event.id} 
-                                        className="calendar-event"
-                                        onMouseEnter={() => setHoveredEvent(event)}
-                                        onMouseLeave={() => setHoveredEvent(null)}
-                                        onClick={() => handleEditEvent(event)}
-                                    >
-                                        {event.eventName}
-                                    </div>
-                                );
-                            }
-                            return null;
-                        })}
-                    />
+                <Calendar
+                    onChange={(value) => setEventForm({ ...eventForm, startDate: value })}
+                    value={eventForm.startDate}
+                    className="react-calendar"
+                    calendarType="US"
+                    tileContent={({ date, view }) => view === 'month' && events.map((event) => {
+                        const start = new Date(event.startDate);
+                        const end = new Date(event.endDate);
+                        if (date >= start && date <= end) {
+                            return (
+                                <div 
+                                    key={event.id} 
+                                    className="calendar-event"
+                                    onMouseEnter={() => setHoveredEvent(event)}
+                                    onMouseLeave={() => setHoveredEvent(null)}
+                                    onClick={() => handleEditEvent(event)}
+                                >
+                                    {event.eventName}
+                                </div>
+                            );
+                        }
+                        return null;
+                    })}
+                />
+                {hoveredEvent && (
                     <EventDetailsTooltip event={hoveredEvent} />
-                </div>
+                )}
+            </div>
             </div>
         </>
     );
