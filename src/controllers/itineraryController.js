@@ -35,6 +35,7 @@ const getItineraries = async (req, res) => {
         const itineraries = await ItineraryModel.getAllItineraries(userId);
         res.json(itineraries);
     } catch (error) {
+        console.error("Error in getItineraries:", error); 
         res.status(500).send(error.message);
     }
 };
