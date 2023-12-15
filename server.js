@@ -36,12 +36,12 @@ pool.connect()
         process.exit(1);
     });
 // Import route handlers
+const searchRoutes = require('./src/routes/searchRoutes.js');
 const tripRoutes = require('./src/routes/tripRoutes.js');
 const expenseRoutes = require('./src/routes/expenseRoutes.js');
 const itineraryRoutes = require('./src/routes/itineraryRoutes.js');
 const mediaRoutes = require('./src/routes/mediaRoutes.js');
 const loginsignupRoutes = require('./src/routes/loginsignupRoutes.js');
-const searchRoutes = require('./src/routes/searchRoutes.js');
 
 // Create express app
 const app = express();
@@ -50,12 +50,12 @@ app.use(cors());
 
 
 // API Routes
+app.use('/api/search', searchRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/itinerary', itineraryRoutes);
 app.use('/api/media', mediaRoutes);
 app.use('/api', loginsignupRoutes);
-app.use('/api/search', searchRoutes);
 
 // Error handling middleware
 app.use((err, req, res, next) => {

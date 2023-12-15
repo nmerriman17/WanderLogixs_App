@@ -37,74 +37,49 @@ function Itinerary() {
         const fetchEvents = async () => {
             const token = localStorage.getItem('token');
             if (!token) {
-                console.error('Authentication token is missing');
-                navigate('/login'); // Redirect to login
+                navigate('/login');
                 return;
             }
-    
+
             try {
-                const response = await fetch('/api/itinerary', {
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/itinerary`, {
                     method: 'GET',
                     headers: {
-                        'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
                 });
-    
+
                 if (!response.ok) {
-                    // Attempt to parse JSON response, but handle cases where response is not JSON
-                    let errorData;
-                    try {
-                        errorData = await response.json();
-                    } catch (jsonError) {
-                        errorData = { message: response.statusText };
-                    }
-    
-                    if (response.status === 403) {
-                        console.error('Token expired or invalid', errorData);
-                        navigate('/login'); // Redirect to login
+                    if (response.status === 401) {
+                        navigate('/login');
                     } else {
-                        console.error(`Server responded with status: ${response.status}`, errorData);
-                        // Optionally update state with error message for user feedback
+                        throw new Error(`HTTP error! Status: ${response.status}`);
                     }
-                } else {
-                    const data = await response.json();
-                    setEvents(data);
                 }
+
+                const data = await response.json();
+                setEvents(data);
             } catch (error) {
                 console.error('Error fetching events:', error);
             }
         };
-    
+
         fetchEvents();
-    }, [navigate, setEvents]);
+    }, [navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
-        if (name === "startDate" || name === "endDate") {
-            setEventForm({ ...eventForm, [name]: new Date(value) });
-        } else {
-            setEventForm({ ...eventForm, [name]: value });
-        }
+        setEventForm({ ...eventForm, [name]: value });
     };
 
     const formatDateValue = (date) => {
-        return date instanceof Date ? date.toISOString().split('T')[0] : '';
+        return date.toISOString().split('T')[0];
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-
-        const token = localStorage.getItem('token');
-        if (!token) {
-            console.error('Authentication token is missing');
-            navigate('/login'); // Redirect to login
-            return;
-        }
-
         try {
             const validatedData = await itinerarySchema.validate(eventForm, { abortEarly: false });
-            // Ensure dates are formatted correctly
             const eventData = {
                 ...validatedData,
                 startDate: validatedData.startDate.toISOString().split('T')[0],
@@ -112,60 +87,33 @@ function Itinerary() {
             };
 
             const method = editingEventId ? 'PUT' : 'POST';
-            const endpoint = editingEventId ? `/api/itinerary/${editingEventId}` : '/api/itinerary';
+            const endpoint = editingEventId ? `${process.env.REACT_APP_API_URL}/itinerary/${editingEventId}` : `${process.env.REACT_APP_API_URL}/itinerary`;
 
             const response = await fetch(endpoint, {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`
                 },
                 body: JSON.stringify(eventData)
             });
 
             if (!response.ok) {
-                if (response.status === 403) {
-                    console.error('Token expired or invalid');
-                    navigate('/login'); // Redirect to login
-                } else {
-                    const errorData = await response.json();
-                    setErrors({ serverError: errorData.message });
-                    throw new Error('Network response was not ok');
-                }
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
             const updatedEvent = await response.json();
             if (editingEventId) {
-                setEvents(events.map(event => event.id === editingEventId ? updatedEvent : event));
+                setEvents(events.map(event => event.event_id === editingEventId ? updatedEvent : event));
             } else {
                 setEvents([...events, updatedEvent]);
             }
 
             resetForm();
-            setEditingEventId(null);
-        } catch (validationError) {
-            if (validationError.inner && Array.isArray(validationError.inner)) {
-                setErrors(validationError.inner.reduce((acc, error) => ({
-                    ...acc, [error.path]: error.message
-                }), {}));
-            } else {
-                console.error(validationError.message);
-            }
+        } catch (error) {
+            console.error('Error submitting form:', error);
+            setErrors({ form: 'Error submitting form' });
         }
-    };
-
-    const handleEditEvent = (event) => {
-        setEditingEventId(event.id);
-        setEventForm({
-            eventName: event.eventName,
-            location: event.location,
-            startDate: new Date(event.startDate),
-            endDate: new Date(event.endDate),
-            startTime: event.startTime,
-            endTime: event.endTime,
-            description: event.description,
-            notification: event.notification
-        });
     };
 
     const resetForm = () => {
@@ -179,23 +127,23 @@ function Itinerary() {
             description: '',
             notification: ''
         });
-        setErrors({});
         setEditingEventId(null);
+        setErrors({});
     };
 
-    const EventDetailsTooltip = ({ event }) => {
-        if (!event) return null;
-        return (
-            <div className="event-details-tooltip">
-                <p>Event Name: {event.eventName}</p>
-                <p>Location: {event.location}</p>
-                {/* Add more details as needed */}
-            </div>
-        );
+    const handleEditEvent = (event) => {
+        setEditingEventId(event.event_id);
+        setEventForm({
+            eventName: event.event_name,
+            location: event.location,
+            startDate: new Date(event.start_datetime),
+            endDate: new Date(event.end_datetime),
+            startTime: event.start_datetime.split('T')[1].substring(0, 5),
+            endTime: event.end_datetime.split('T')[1].substring(0, 5),
+            description: event.description,
+            notification: event.notification
+        });
     };
-    
-    const [hoveredEvent, setHoveredEvent] = useState(null);
-
 
     return (
         <>
@@ -320,32 +268,22 @@ function Itinerary() {
                 {/* Calendar Component */}
                 <div className="calendar-container">
                 <Calendar
-                    onChange={(value) => setEventForm({ ...eventForm, startDate: value })}
-                    value={eventForm.startDate}
-                    className="react-calendar"
-                    calendarType="US"
-                    tileContent={({ date, view }) => view === 'month' && events.map((event) => {
-                        const start = new Date(event.startDate);
-                        const end = new Date(event.endDate);
-                        if (date >= start && date <= end) {
-                            return (
-                                <div 
-                                    key={event.id} 
-                                    className="calendar-event"
-                                    onMouseEnter={() => setHoveredEvent(event)}
-                                    onMouseLeave={() => setHoveredEvent(null)}
-                                    onClick={() => handleEditEvent(event)}
-                                >
-                                    {event.eventName}
-                                </div>
-                            );
-                        }
-                        return null;
+                    onChange={date => setEventForm({ ...eventForm, startDate: date })}
+                    value={new Date()}
+                    tileContent={({ date, view }) =>
+                        view === 'month' && events.map(event => {
+                            const eventStartDate = new Date(event.start_datetime);
+                            const eventEndDate = new Date(event.end_datetime);
+                            if (date >= eventStartDate && date <= eventEndDate) {
+                                return (
+                                    <div key={event.event_id} onClick={() => handleEditEvent(event)}>
+                                        {event.event_name}
+                                    </div>
+                                );
+                            }
+                            return null;
                     })}
                 />
-                {hoveredEvent && (
-                    <EventDetailsTooltip event={hoveredEvent} />
-                )}
             </div>
             </div>
         </>
