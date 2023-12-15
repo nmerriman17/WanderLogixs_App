@@ -4,7 +4,7 @@ import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
-import Modal from 'react-bootstrap/Modal'; // Import Modal
+import Modal from 'react-bootstrap/Modal';
 import { Link } from 'react-router-dom';
 import './header.css';
 
@@ -13,7 +13,7 @@ import logoImage from '../assets/images/logo-icon.png';
 export default function AppHeader() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showModal, setShowModal] = useState(false); // State for modal visibility
+    const [showModal, setShowModal] = useState(false);
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
@@ -21,7 +21,7 @@ export default function AppHeader() {
 
     const handleSearchSubmit = async (event) => {
         event.preventDefault();
-        // Use relative URL for production
+    
         const baseUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3004';
         const apiUrl = `${baseUrl}/api/search?term=${encodeURIComponent(searchTerm)}`;
     
@@ -29,7 +29,7 @@ export default function AppHeader() {
             const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
+                    'Authorization': `Bearer ${localStorage.getItem('token')}`, // Sending token
                     'Content-Type': 'application/json',
                 },
             });
@@ -40,14 +40,14 @@ export default function AppHeader() {
     
             const data = await response.json();
             setSearchResults(data);
-            setShowModal(true); // Open modal on successful search
+            setShowModal(true);
         } catch (error) {
             console.error('Error during fetch:', error);
-            setSearchResults([]); // Reset search results on error
+            setSearchResults([]);
         }
     };
 
-    const handleCloseModal = () => setShowModal(false); // Function to close modal
+    const handleCloseModal = () => setShowModal(false);
 
     return (
         <>
@@ -96,12 +96,14 @@ export default function AppHeader() {
                     <Modal.Title>Search Results</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    {searchResults.length > 0 && (
+                    {searchResults.length > 0 ? (
                         <ul>
                             {searchResults.map(result => (
                                 <li key={result.id}>{result.name}</li>
                             ))}
                         </ul>
+                    ) : (
+                        <div>No results found</div> // or simply 'null' if you don't want to show anything
                     )}
                 </Modal.Body>
             </Modal>

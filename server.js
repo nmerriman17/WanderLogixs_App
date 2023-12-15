@@ -6,6 +6,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
+
 // Database connection setup
 let poolConfig = {};
 
@@ -50,7 +51,7 @@ app.use(cors());
 
 
 // API Routes
-app.use('/api/search', searchRoutes);
+app.use('/api', searchRoutes);
 app.use('/api/trips', tripRoutes);
 app.use('/api/expenses', expenseRoutes);
 app.use('/api/itinerary', itineraryRoutes);
