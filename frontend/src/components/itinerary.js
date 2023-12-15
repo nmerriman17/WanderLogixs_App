@@ -37,35 +37,36 @@ function Itinerary() {
     useEffect(() => {
         const fetchEvents = async () => {
             const token = localStorage.getItem('token');
-            const apiURL = process.env.REACT_APP_API_URL || 'https://wanderlogixs-3ca36711a00d.herokuapp.com/api';
-            const fetchURL = `${apiURL}/itinerary`;
-    
-            console.log('Fetching from URL:', fetchURL); // Debug log
-    
             if (!token) {
                 navigate('/login');
                 return;
             }
-    
+
             try {
-                const response = await fetch(fetchURL, {
+                console.log(process.env.REACT_APP_API_URL)
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/itinerary`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-    
+                
+
                 if (!response.ok) {
-                    throw new Error(`HTTP error! Status: ${response.status}`);
+                    if (response.status === 401) {
+                        navigate('/login');
+                    } else {
+                        throw new Error(`HTTP error! Status: ${response.status}`);
+                    }
                 }
-    
+
                 const data = await response.json();
                 setEvents(data);
             } catch (error) {
                 console.error('Error fetching events:', error);
             }
         };
-    
+
         fetchEvents();
     }, [navigate]);
 
