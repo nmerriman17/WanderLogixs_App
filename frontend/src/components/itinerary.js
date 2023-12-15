@@ -42,23 +42,22 @@ function Itinerary() {
                 return;
             }
             try {
-                console.log(process.env.REACT_APP_API_URL)
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/itinerary`, {
+                const response = await fetch(`${process.env.REACT_APP_API_URL}/api/itinerary`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-                
-
+            
                 if (!response.ok) {
+                    console.error('Response Error:', response.status, response.statusText);
                     if (response.status === 401) {
                         navigate('/login');
                     } else {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                 }
-
+            
                 const data = await response.json();
                 setEvents(data);
             } catch (error) {
@@ -95,7 +94,7 @@ function Itinerary() {
                 method: method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    'Authorization': `Bearer ${sessionStorage.getItem('token')}`
                 },
                 body: JSON.stringify(eventData)
             });
