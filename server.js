@@ -6,19 +6,25 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Verify if DATABASE_URL is set
-if (!process.env.DATABASE_URL) {
-    console.error("DATABASE_URL not set. Ensure you have configured your database correctly in Heroku.");
-    process.exit(1);
-}
-
 // Database connection setup
-const poolConfig = {
-    connectionString: process.env.DATABASE_URL,
-    ssl: process.env.NODE_ENV === 'production' 
-        ? { rejectUnauthorized: false } 
-        : null
-};
+let poolConfig = {};
+
+if (process.env.NODE_ENV === 'production') {
+    // Heroku PostgreSQL configuration
+    poolConfig = {
+        connectionString: process.env.DATABASE_URL,
+        ssl: { rejectUnauthorized: false }
+    };
+} else {
+    // Local database configuration
+    poolConfig = {
+        user: process.env.DB_USER,
+        host: process.env.DB_HOST,
+        database: process.env.DB_NAME,
+        password: process.env.DB_PASS,
+        port: process.env.DB_PORT
+    };
+}
 
 const pool = new Pool(poolConfig);
 
@@ -29,7 +35,6 @@ pool.connect()
         console.error('Failed to connect to the database', err);
         process.exit(1);
     });
-
 // Import route handlers
 const tripRoutes = require('./src/routes/tripRoutes.js');
 const expenseRoutes = require('./src/routes/expenseRoutes.js');
@@ -42,6 +47,7 @@ const searchRoutes = require('./src/routes/searchRoutes.js');
 const app = express();
 app.use(express.json());
 app.use(cors());
+
 
 // API Routes
 app.use('/api/trips', tripRoutes);
@@ -66,7 +72,7 @@ app.get('*', (req, res) => {
 });
 
 // Start the server
-const PORT = process.env.PORT;
+const PORT = process.env.PORT | 3004;
 app.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}.`);
 });

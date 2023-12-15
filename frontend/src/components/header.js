@@ -4,6 +4,7 @@ import Nav from 'react-bootstrap/Nav';
 import Navbar from 'react-bootstrap/Navbar';
 import Form from 'react-bootstrap/Form';
 import Button from 'react-bootstrap/Button';
+import Modal from 'react-bootstrap/Modal'; // Import Modal
 import { Link } from 'react-router-dom';
 import './header.css';
 
@@ -12,6 +13,7 @@ import logoImage from '../assets/images/logo-icon.png';
 export default function AppHeader() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [showModal, setShowModal] = useState(false); // State for modal visibility
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
@@ -23,7 +25,7 @@ export default function AppHeader() {
             const response = await fetch(`http://localhost:3004/api/search?term=${encodeURIComponent(searchTerm)}`, {
                 method: 'GET',
                 headers: {
-                    'Authorization': 'Bearer ' + localStorage.getItem('token'), // Replace with your auth token retrieval logic
+                    'Authorization': 'Bearer ' + localStorage.getItem('token'),
                     'Content-Type': 'application/json',
                 },
             });
@@ -33,12 +35,15 @@ export default function AppHeader() {
             }
 
             const data = await response.json();
-            setSearchResults(data); // Update search results state
+            setSearchResults(data);
+            setShowModal(true); // Open modal on successful search
         } catch (error) {
             console.error('Error during fetch:', error);
             setSearchResults([]); // Reset search results on error
         }
     };
+
+    const handleCloseModal = () => setShowModal(false); // Function to close modal
 
     return (
         <>
@@ -80,18 +85,21 @@ export default function AppHeader() {
                 </Container>
             </Navbar>
 
-            {/* Display Search Results */}
-            <div>
-                {searchResults.length > 0 ? (
-                    <ul>
-                        {searchResults.map(result => (
-                            <li key={result.id}>{result.name}</li>
-                        ))}
-                    </ul>
-                ) : (
-                    <p>No results found</p>
-                )}
-            </div>
+            {/* Modal for displaying search results */}
+            <Modal show={showModal} onHide={handleCloseModal}>
+                <Modal.Header closeButton>
+                    <Modal.Title>Search Results</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {searchResults.length > 0 && (
+                        <ul>
+                            {searchResults.map(result => (
+                                <li key={result.id}>{result.name}</li>
+                            ))}
+                        </ul>
+                    )}
+                </Modal.Body>
+            </Modal>
         </>
     );
 }
