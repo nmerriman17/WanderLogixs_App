@@ -6,6 +6,7 @@ import * as yup from 'yup';
 import AppHeader from '../components/header.js';
 import './itinerary.css';
 
+// Define the schema for validation using yup
 const itinerarySchema = yup.object().shape({
     eventName: yup.string().required('Event name is required'),
     location: yup.string().required('Location is required'),
