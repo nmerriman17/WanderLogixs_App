@@ -48,16 +48,15 @@ function Itinerary() {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-            
+                
                 if (!response.ok) {
-                    console.error('Response Error:', response.status, response.statusText);
                     if (response.status === 401) {
                         navigate('/login');
                     } else {
                         throw new Error(`HTTP error! Status: ${response.status}`);
                     }
                 }
-            
+
                 const data = await response.json();
                 setEvents(data);
             } catch (error) {
@@ -83,15 +82,15 @@ function Itinerary() {
             const validatedData = await itinerarySchema.validate(eventForm, { abortEarly: false });
             const eventData = {
                 ...validatedData,
-                startDate: validatedData.startDate.toISOString().split('T')[0],
-                endDate: validatedData.endDate.toISOString().split('T')[0]
+                startDate: formatDateValue(validatedData.startDate),
+                endDate: formatDateValue(validatedData.endDate)
             };
 
             const method = editingEventId ? 'PUT' : 'POST';
-            const endpoint = editingEventId ? `${process.env.REACT_APP_API_URL}/itinerary/${editingEventId}` : `${process.env.REACT_APP_API_URL}/itinerary`;
+            const endpoint = editingEventId ? `${process.env.REACT_APP_API_URL}/api/itinerary/${editingEventId}` : `${process.env.REACT_APP_API_URL}/api/itinerary`;
 
             const response = await fetch(endpoint, {
-                method: method,
+                method,
                 headers: {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${sessionStorage.getItem('token')}`
@@ -144,6 +143,10 @@ function Itinerary() {
             description: event.description,
             notification: event.notification
         });
+    };
+
+    const handleDateChange = (date) => {
+        setEventForm({ ...eventForm, startDate: date });
     };
 
     return (
@@ -268,24 +271,24 @@ function Itinerary() {
 
                 {/* Calendar Component */}
                 <div className="calendar-container">
-                <Calendar
-                    onChange={date => setEventForm({ ...eventForm, startDate: date })}
-                    value={new Date()}
-                    tileContent={({ date, view }) =>
-                        view === 'month' && events.map(event => {
-                            const eventStartDate = new Date(event.start_datetime);
-                            const eventEndDate = new Date(event.end_datetime);
-                            if (date >= eventStartDate && date <= eventEndDate) {
-                                return (
-                                    <div key={event.event_id} onClick={() => handleEditEvent(event)}>
-                                        {event.event_name}
-                                    </div>
-                                );
-                            }
-                            return null;
-                    })}
-                />
-            </div>
+                    <Calendar
+                        onChange={handleDateChange}
+                        value={eventForm.startDate}
+                        tileContent={({ date, view }) =>
+                            view === 'month' && events.map(event => {
+                                const eventStartDate = new Date(event.start_datetime);
+                                const eventEndDate = new Date(event.end_datetime);
+                                if (date >= eventStartDate && date <= eventEndDate) {
+                                    return (
+                                        <div key={event.event_id} onClick={() => handleEditEvent(event)}>
+                                            {event.event_name}
+                                        </div>
+                                    );
+                                }
+                                return null;
+                            })}
+                    />
+                </div>
             </div>
         </>
     );

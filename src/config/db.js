@@ -22,7 +22,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 const pool = new Pool(poolConfig);
-
+module.exports = pool;
 
 // Function for full-text search in the database
 const searchDatabase = async (term) => {
@@ -87,4 +87,4 @@ const getUserByEmail = async (email) => {
     }
 };
 
-module.exports = { pool, searchDatabase, registerUser, getUserByEmail };
+module.exports = { searchDatabase, registerUser, getUserByEmail };

@@ -61,7 +61,6 @@ export default function AppHeader() {
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
-                            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                             <Nav.Link as={Link} to="/trips">Trips</Nav.Link>
                             <Nav.Link as={Link} to="/expenses">Expenses</Nav.Link>
                             <Nav.Link as={Link} to="/itinerary">Itinerary</Nav.Link>
