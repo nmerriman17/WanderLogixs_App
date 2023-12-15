@@ -37,36 +37,35 @@ function Itinerary() {
     useEffect(() => {
         const fetchEvents = async () => {
             const token = localStorage.getItem('token');
+            const apiURL = process.env.REACT_APP_API_URL || 'https://wanderlogixs-3ca36711a00d.herokuapp.com/api';
+            const fetchURL = `${apiURL}/itinerary`;
+    
+            console.log('Fetching from URL:', fetchURL); // Debug log
+    
             if (!token) {
                 navigate('/login');
                 return;
             }
-
+    
             try {
-                console.log(process.env.REACT_APP_API_URL)
-                const response = await fetch(`${process.env.REACT_APP_API_URL}/itinerary`, {
+                const response = await fetch(fetchURL, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     },
                 });
-                
-
+    
                 if (!response.ok) {
-                    if (response.status === 401) {
-                        navigate('/login');
-                    } else {
-                        throw new Error(`HTTP error! Status: ${response.status}`);
-                    }
+                    throw new Error(`HTTP error! Status: ${response.status}`);
                 }
-
+    
                 const data = await response.json();
                 setEvents(data);
             } catch (error) {
                 console.error('Error fetching events:', error);
             }
         };
-
+    
         fetchEvents();
     }, [navigate]);
 
@@ -76,6 +75,10 @@ function Itinerary() {
     };
 
     const formatDateValue = (date) => {
+        if (!(date instanceof Date)) {
+            console.error('Invalid date value:', date);
+            return ''; // Return an empty string or handle the error as needed
+        }
         return date.toISOString().split('T')[0];
     };
 
