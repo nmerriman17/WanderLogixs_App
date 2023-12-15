@@ -1,10 +1,10 @@
 const TripModel = require('../models/tripModel');
-const s3Upload = require('../config/s3Upload'); 
+const s3Upload = require('../config/s3Upload');
 
 const getTrips = async (req, res) => {
     try {
         const userId = req.userId;
-        const trips = await TripModel.getTripsByUserId(userId);
+        const trips = await TripModel.getAllTrips(userId);
         res.json(trips);
     } catch (error) {
         res.status(500).send(error.message);
@@ -13,9 +13,9 @@ const getTrips = async (req, res) => {
 
 const getTripById = async (req, res) => {
     try {
-        const { id } = req.params;
+        const tripId = req.params.id;
         const userId = req.userId;
-        const trip = await TripModel.getTripById(id, userId);
+        const trip = await TripModel.getTripById(tripId, userId);
         if (!trip) {
             return res.status(404).send('Trip not found');
         }
@@ -28,15 +28,11 @@ const getTripById = async (req, res) => {
 const createTrip = async (req, res) => {
     try {
         const userId = req.userId;
-        let fileKey = null;
-
+        let file = null;
         if (req.file) {
-            const uploadResult = await s3Upload.uploadFileToS3(req.file);
-            fileKey = uploadResult.fileKey;
+            file = req.file;
         }
-
-        const tripData = { ...req.body, user_id: userId, file_key: fileKey };
-        const newTrip = await TripModel.createTrip(tripData);
+        const newTrip = await TripModel.addTrip({ ...req.body, file }, userId);
         res.status(201).json(newTrip);
     } catch (error) {
         res.status(500).send(error.message);
@@ -45,26 +41,23 @@ const createTrip = async (req, res) => {
 
 const updateTrip = async (req, res) => {
     try {
-        const { id } = req.params;
+        const tripId = req.params.id;
         const userId = req.userId;
-        const existingTrip = await TripModel.getTripById(id, userId);
-
+        const existingTrip = await TripModel.getTripById(tripId, userId);
         if (!existingTrip) {
             return res.status(404).send('Trip not found');
         }
 
-        let fileKey = existingTrip.file_key;
-
+        let file = null;
         if (req.file) {
-            if (fileKey) {
-                await s3Upload.deleteFileFromS3(fileKey);
+            // Delete existing file from S3
+            if (existingTrip.file_key) {
+                await s3Upload.deleteFileFromS3(existingTrip.file_key);
             }
-            const uploadResult = await s3Upload.uploadFileToS3(req.file);
-            fileKey = uploadResult.fileKey;
+            file = req.file;
         }
 
-        const updatedTripData = { ...req.body, file_key: fileKey };
-        const updatedTrip = await TripModel.updateTrip(id, updatedTripData);
+        const updatedTrip = await TripModel.updateTrip(tripId, { ...req.body, file }, userId);
         res.json(updatedTrip);
     } catch (error) {
         res.status(500).send(error.message);
@@ -73,10 +66,9 @@ const updateTrip = async (req, res) => {
 
 const deleteTrip = async (req, res) => {
     try {
-        const { id } = req.params;
+        const tripId = req.params.id;
         const userId = req.userId;
-        const trip = await TripModel.getTripById(id, userId);
-
+        const trip = await TripModel.getTripById(tripId, userId);
         if (!trip) {
             return res.status(404).send('Trip not found');
         }
@@ -85,17 +77,11 @@ const deleteTrip = async (req, res) => {
             await s3Upload.deleteFileFromS3(trip.file_key);
         }
 
-        await TripModel.deleteTrip(id);
-        res.status(204).send();
+        await TripModel.deleteTrip(tripId, userId);
+        res.status(204).send(); // 204 No Content
     } catch (error) {
         res.status(500).send(error.message);
     }
 };
 
-module.exports = {
-    getTrips,
-    getTripById,
-    createTrip,
-    updateTrip,
-    deleteTrip
-};
+module.exports = { getTrips, getTripById, createTrip, updateTrip, deleteTrip };
