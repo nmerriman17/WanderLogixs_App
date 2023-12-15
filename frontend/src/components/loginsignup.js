@@ -24,7 +24,7 @@ const Loginsignup = () => {
             // Storing the token in local storage
             if (response.data.token) {
                 localStorage.setItem('token', response.data.token);
-                navigate('/dashboard');
+                navigate('/itinerary');
             } else {
                 throw new Error('Token not received');
             }

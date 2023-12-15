@@ -21,19 +21,23 @@ export default function AppHeader() {
 
     const handleSearchSubmit = async (event) => {
         event.preventDefault();
+        // Use relative URL for production
+        const baseUrl = process.env.NODE_ENV === 'production' ? '' : 'http://localhost:3004';
+        const apiUrl = `${baseUrl}/api/search?term=${encodeURIComponent(searchTerm)}`;
+    
         try {
-            const response = await fetch(`http://localhost:3004/api/search?term=${encodeURIComponent(searchTerm)}`, {
+            const response = await fetch(apiUrl, {
                 method: 'GET',
                 headers: {
                     'Authorization': 'Bearer ' + localStorage.getItem('token'),
                     'Content-Type': 'application/json',
                 },
             });
-
+    
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
-
+    
             const data = await response.json();
             setSearchResults(data);
             setShowModal(true); // Open modal on successful search
@@ -60,10 +64,11 @@ export default function AppHeader() {
                     {/* Toggler */}
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
 
+
+
                     {/* Navbar Links and Search Form */}
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
-                            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                             <Nav.Link as={Link} to="/trips">Trips</Nav.Link>
                             <Nav.Link as={Link} to="/expenses">Expenses</Nav.Link>
                             <Nav.Link as={Link} to="/itinerary">Itinerary</Nav.Link>
