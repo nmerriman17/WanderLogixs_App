@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController'); 
-const { authenticateToken } = require('../middleware/auth'); 
+const { authenticateToken } = require('../../middleware/auth');
 const multer = require('multer');
 const upload = multer(); 
 
