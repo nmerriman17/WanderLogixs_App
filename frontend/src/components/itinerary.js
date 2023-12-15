@@ -75,10 +75,6 @@ function Itinerary() {
     };
 
     const formatDateValue = (date) => {
-        if (!(date instanceof Date)) {
-            console.error('Invalid date value:', date);
-            return ''; // Return an empty string or handle the error as needed
-        }
         return date.toISOString().split('T')[0];
     };
 
