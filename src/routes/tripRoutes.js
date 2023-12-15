@@ -1,25 +1,15 @@
 const express = require('express');
-const multer = require('multer');
-const TripController = require('../controllers/tripController.js');
-const { authenticateToken } = require('../../middleware/auth');
 const router = express.Router();
+const tripController = require('../controllers/tripController'); 
+const { authenticateToken } = require('../middleware/auth'); 
+const multer = require('multer');
+const upload = multer(); 
 
-// Setup multer for file upload. Configure as needed.
-const upload = multer({ dest: 'uploads/' });
-
-// Route to create a new trip with potential file upload
-router.post('/', authenticateToken, upload.single('media'), TripController.createTrip);
-
-// Get all trips
-router.get('/', authenticateToken, TripController.getTrips);
-
-// Get a single trip by ID
-router.get('/:id', authenticateToken, TripController.getTripById);
-
-// Update a trip with potential file upload
-router.put('/:id', authenticateToken, upload.single('media'), TripController.updateTrip);
-
-// Delete a trip
-router.delete('/:id', authenticateToken, TripController.deleteTrip);
+// Routes
+router.get('/', authenticateToken, tripController.getTrips);
+router.get('/:id', authenticateToken, tripController.getTripById);
+router.post('/', authenticateToken, upload.single('media'), tripController.createTrip);
+router.put('/:id', authenticateToken, upload.single('media'), tripController.updateTrip);
+router.delete('/:id', authenticateToken, tripController.deleteTrip);
 
 module.exports = router;

@@ -1,13 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as yup from 'yup';
-import './trip.css'; 
-import 'bootstrap/dist/css/bootstrap.min.css';
 import AppHeader from '../components/header.js'; 
 import Card from 'react-bootstrap/Card';
 import Col from 'react-bootstrap/Col';
 import axios from 'axios';
+import './trip.css'; 
+import 'bootstrap/dist/css/bootstrap.min.css';
 
+const apiUrl = process.env.REACT_APP_API_URL || '/api'; // Ensure this is set
 
 const schema = yup.object().shape({
     destination: yup.string().required('Destination is required'),
@@ -22,8 +23,8 @@ const TripCard = ({ trip, onEdit, onDelete }) => {
     return (
         <Col xs={12} md={6} lg={4}>
             <Card>
-                {trip.media && (
-                    <Card.Img variant="top" src={URL.createObjectURL(trip.media)} alt="Trip" />
+                {trip.mediaUrl && (
+                    <Card.Img variant="top" src={trip.mediaUrl} alt="Trip" />
                 )}
                 <Card.Body>
                     <Card.Title>{trip.destination}</Card.Title>
@@ -50,49 +51,69 @@ const TripCard = ({ trip, onEdit, onDelete }) => {
 const TripsForm = () => {
     const [trips, setTrips] = useState([]);
     const [editingTrip, setEditingTrip] = useState(null);
-  
+
     const createAuthHeaders = () => {
         const token = localStorage.getItem('token');
         return { headers: { Authorization: `Bearer ${token}` } };
     };
     
-    // Fetch trips with Authorization header
     useEffect(() => {
-        axios.get('/api/trips', createAuthHeaders())
+        axios.get(`${apiUrl}/trips`, createAuthHeaders())
              .then(response => setTrips(response.data))
              .catch(error => console.error('Error fetching trips', error));
     }, []);
     
-  const handleSubmit = (values, { resetForm }) => {
-    const apiCall = editingTrip
-        ? axios.put(`/api/trips/${editingTrip.id}`, values, createAuthHeaders())
-        : axios.post('/api/trips', values, createAuthHeaders());
+    const handleFileUpload = async (file) => {
+        const formData = new FormData();
+        formData.append('file', file);
 
-      apiCall.then(response => {
-          setTrips(editingTrip ? trips.map(trip => trip.id === editingTrip.id ? response.data : trip) : [response.data, ...trips]);
-          setEditingTrip(null);
-          resetForm();
-      }).catch(error => console.error('Error submitting trip', error));
-  };
+        try {
+            const response = await axios.post(`${apiUrl}/upload`, formData, createAuthHeaders());
+            return response.data.fileKey;
+        } catch (error) {
+            console.error('Error uploading file', error);
+            throw error;
+        }
+    };
 
-  const handleEdit = (trip) => {
-      setEditingTrip(trip);
-  };
+    const handleSubmit = async (values, { resetForm }) => {
+        let fileKey;
+        if (values.media) {
+            fileKey = await handleFileUpload(values.media);
+        }
 
-  const handleDelete = (tripToDelete) => {
-    axios.delete(`/api/trips/${tripToDelete.id}`, createAuthHeaders())
-      .then(() => {
-        setTrips(trips.filter(trip => trip.id !== tripToDelete.id));
-      })
-      .catch(error => console.error('Error deleting trip', error));
-  };
+        const tripData = { ...values, fileKey };
+        delete tripData.media;
 
-  return (
+        const apiCall = editingTrip
+            ? axios.put(`${apiUrl}/trips/${editingTrip.trip_id}`, tripData, createAuthHeaders())
+            : axios.post(`${apiUrl}/trips`, tripData, createAuthHeaders());
+
+        apiCall.then(response => {
+            setTrips(editingTrip ? trips.map(trip => trip.trip_id === editingTrip.trip_id ? response.data : trip) : [response.data, ...trips]);
+            setEditingTrip(null);
+            resetForm();
+        }).catch(error => console.error('Error submitting trip', error));
+    };
+
+    const handleEdit = (trip) => {
+        setEditingTrip(trip);
+    };
+
+    const handleDelete = (tripToDelete) => {
+        axios.delete(`${apiUrl}/trips/${tripToDelete.trip_id}`, createAuthHeaders())
+             .then(() => {
+                 setTrips(trips.filter(trip => trip.trip_id !== tripToDelete.trip_id));
+             })
+             .catch(error => console.error('Error deleting trip', error));
+    };
+
+    return (
         <>
             <AppHeader />
             <div className='trips-form-container'>
                 <div className="trips-header">
-                    <div className="trips-text">Add/Edit Your Trip</div>
+                    <div className="trips-text">Add Your Trip</div>
                     <div className="underline"></div>
                 </div>
 
@@ -110,49 +131,49 @@ const TripsForm = () => {
                     onSubmit={handleSubmit}
                 >
                     {({ setFieldValue }) => (
-            <Form>
-              <div className="inputs">
-                {/* Form fields */}
-                <div className="input">
-                  <Field name="destination" type="text" placeholder="Destination" className="form-control" />
-                </div>
-                <div className="input">
-                  <Field name="startDate" type="date" className="form-control" />
-                  <Field name="endDate" type="date" className="form-control" />
-                </div>
-                <div className="input">
-                  <Field name="purpose" type="text" placeholder="Purpose" className="form-control" />
-                </div>
-                <div className="input">
-                  <Field name="notes" type="text" placeholder="Notes" className="form-control" />
-                </div>
-                <div className="input">
-                  <input
-                    id="file"
-                    name="media"
-                    type="file"
-                    onChange={(event) => {
-                      setFieldValue('media', event.currentTarget.files[0]);
-                    }}
-                    className="form-control"
-                  />
-                </div>
-              </div>
-              <div className="trips-submit-container">
-                                <button type="submit" className="btn trip-btn-primary submit">
-                                    {editingTrip ? 'Update' : 'Submit'}
-                                </button>
+                        <Form>
+                            <div className="inputs">
+                                {/* Form fields */}
+                                <div className="input">
+                                <Field name="destination" type="text" placeholder="Destination" className="form-control" />
+                                </div>
+                                <div className="input">
+                                <Field name="startDate" type="date" className="form-control" />
+                                <Field name="endDate" type="date" className="form-control" />
+                                </div>
+                                <div className="input">
+                                <Field name="purpose" type="text" placeholder="Purpose" className="form-control" />
+                                </div>
+                                <div className="input">
+                                <Field name="notes" type="text" placeholder="Notes" className="form-control" />
+                                </div>
+                                <div className="input">
+                                <input
+                                    id="file"
+                                    name="media"
+                                    type="file"
+                                    onChange={(event) => {
+                                    setFieldValue('media', event.currentTarget.files[0]);
+                                    }}
+                                    className="form-control"
+                                />
+                                </div>
                             </div>
-                        </Form>
-                    )}
-                </Formik>
-            </div>
-            <div className="trips-display">
-                {trips.map((trip, index) => (
-                    <TripCard key={index} trip={trip} onEdit={() => handleEdit(trip)} onDelete={() => handleDelete(trip)} />
-                ))}
-            </div>
-        </>
+                            <div className="trips-submit-container">
+                                                <button type="submit" className="btn trip-btn-primary submit">
+                                                    {editingTrip ? 'Update' : 'Submit'}
+                                                </button>
+                                            </div>
+                                        </Form>
+                                    )}
+                                </Formik>
+                            </div>
+                            <div className="trips-display">
+                                {trips.map((trip, index) => (
+                                    <TripCard key={index} trip={trip} onEdit={() => handleEdit(trip)} onDelete={() => handleDelete(trip)} />
+                                ))}
+                            </div>
+                        </>
     );
 };
 
