@@ -5,10 +5,11 @@ import AppHeader from '../components/header.js';
 import Card from 'react-bootstrap/Card';
 import Col from 'react-bootstrap/Col';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './trip.css'; 
 import 'bootstrap/dist/css/bootstrap.min.css';
 
-const apiUrl = process.env.REACT_APP_API_URL || '/api'; // Ensure this is set
+const apiUrl = process.env.REACT_APP_API_URL || '/api'; 
 
 const schema = yup.object().shape({
     destination: yup.string().required('Destination is required'),
@@ -51,17 +52,27 @@ const TripCard = ({ trip, onEdit, onDelete }) => {
 const TripsForm = () => {
     const [trips, setTrips] = useState([]);
     const [editingTrip, setEditingTrip] = useState(null);
+    const navigate = useNavigate();
 
     const createAuthHeaders = () => {
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return {};
+        }
         return { headers: { Authorization: `Bearer ${token}` } };
     };
-    
+
     useEffect(() => {
         axios.get(`${apiUrl}/trips`, createAuthHeaders())
              .then(response => setTrips(response.data))
-             .catch(error => console.error('Error fetching trips', error));
-    }, []);
+             .catch(error => {
+                 console.error('Error fetching trips', error);
+                 if (error.response && error.response.status === 401) {
+                     navigate('/login');
+                 }
+             });
+    }, [navigate]);
     
     const handleFileUpload = async (file) => {
         const formData = new FormData();
@@ -82,7 +93,7 @@ const TripsForm = () => {
             fileKey = await handleFileUpload(values.media);
         }
 
-        const tripData = { ...values, fileKey };
+        const tripData = { ...values, fileKey: fileKey };
         delete tripData.media;
 
         const apiCall = editingTrip

@@ -1,10 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as yup from 'yup';
 import './expenses.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import AppHeader from '../components/header.js'; 
 import Card from 'react-bootstrap/Card';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+
+const apiUrl = process.env.REACT_APP_API_URL || '/api';
 
 const schema = yup.object().shape({
   date: yup.date().required('Date is required'),
@@ -21,11 +25,12 @@ const ExpenseCard = ({ expense }) => {
   return (
     <Card style={{ width: '18rem' }}>
       <Card.Body>
-        <Card.Title>Card Title</Card.Title>
-        <Card.Subtitle className="mb-2 text-muted">Card Subtitle</Card.Subtitle>
+        <Card.Title>{expense.category}</Card.Title>
+        <Card.Subtitle className="mb-2 text-muted">{expense.date}</Card.Subtitle>
         <Card.Text>
-          Some quick example text to build on the card title and make up the
-          bulk of the card's content.
+          {expense.description}
+          <br />
+          <b>Amount:</b> ${expense.amount}
         </Card.Text>
       </Card.Body>
     </Card>
@@ -34,20 +39,40 @@ const ExpenseCard = ({ expense }) => {
 
 const AppExpenses = () => {
   const [expenses, setExpenses] = useState([]);
-  const [formState, setFormState] = useState('submit');
+  const [formState, setFormState] = useState('submit'); 
+  const navigate = useNavigate();
 
-  const handleSubmit = (values, { resetForm }) => {
-    if (formState === 'submit') {
-      const expenseWithDecimalAmount = { ...values, amount: parseFloat(values.amount) };
-      setExpenses([expenseWithDecimalAmount, ...expenses]);
-      resetForm();
-      setFormState('submitted');
-
-      // Reset the form state back to 'submit' after a delay
-      setTimeout(() => {
-        setFormState('submit');
-      }, 1); // Change the delay as needed
+  useEffect(() => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
     }
+
+    axios.get(`${apiUrl}/expenses`, { headers: { Authorization: `Bearer ${token}` } })
+         .then(response => setExpenses(response.data))
+         .catch(error => {
+           console.error('Error fetching expenses:', error);
+           if (error.response && error.response.status === 401) {
+             navigate('/login');
+           }
+         });
+  }, [navigate]);
+
+  const handleSubmit = async (values, { resetForm }) => {
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      navigate('/login');
+      return;
+    }
+
+    const expenseData = { ...values };
+    axios.post(`${apiUrl}/expenses`, expenseData, { headers: { Authorization: `Bearer ${token}` } })
+         .then(response => {
+           setExpenses([response.data, ...expenses]);
+           resetForm();
+         })
+         .catch(error => console.error('Error submitting expense:', error));
   };
 
 

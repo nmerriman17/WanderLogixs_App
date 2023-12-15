@@ -21,9 +21,9 @@ const Loginsignup = () => {
                 headers: { 'Content-Type': 'application/json' }
             });
     
-            // Storing the token in local storage
+            // Storing the token in session storage
             if (response.data.token) {
-                localStorage.setItem('token', response.data.token);
+                sessionStorage.setItem('token', response.data.token);
                 navigate('/itinerary');
             } else {
                 throw new Error('Token not received');

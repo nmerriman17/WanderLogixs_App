@@ -1,54 +1,104 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Formik, Form, Field } from 'formik';
 import * as yup from 'yup';
 import { FacebookShareButton, TwitterShareButton, FacebookIcon, TwitterIcon } from 'react-share';
 import Card from 'react-bootstrap/Card';
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import './media.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import AppHeader from '../components/header.js'; 
 
-// Validation schema
+const apiUrl = process.env.REACT_APP_API_URL || '/api';
+
 const schema = yup.object().shape({
-  category: yup.string().required('Category is required'),
-  tags: yup.string(),
-  notes: yup.string(),
-  media: yup.array(), // Custom validation can be added for file types, sizes, etc.
+    tripName: yup.string().required('Trip name is required'),
+    tags: yup.string(),
+    notes: yup.string(),
+    media: yup.mixed(), // This can be refined based on your requirements
 });
 
-// MediaCard component
 const MediaCard = ({ media, index }) => {
-  const shareUrl = window.location.origin + '/media/' + index; // Or a more sophisticated URL
+    const shareUrl = window.location.origin + '/media/' + index; // Or a more sophisticated URL
 
-  return (
-    <Card style={{ width: '18rem' }}>
-      <Card.Body>
-        <Card.Title>{media.category}</Card.Title>
-        <p>Tags: {media.tags}</p>
-        <p>Notes: {media.notes}</p>
-        {/* Display uploaded media previews if needed */}
-        <div>
-          <FacebookShareButton url={shareUrl}>
-            <FacebookIcon size={32} round />
-          </FacebookShareButton>
-          <TwitterShareButton url={shareUrl}>
-            <TwitterIcon size={32} round />
-          </TwitterShareButton>
-        </div>
-      </Card.Body>
-    </Card>
-  );
+    return (
+        <Card style={{ width: '18rem' }}>
+            <Card.Body>
+                <Card.Title>{media.tripName}</Card.Title>
+                <p>Tags: {media.tags}</p>
+                <p>Notes: {media.notes}</p>
+                {/* Display uploaded media previews if needed */}
+                <div>
+                    <FacebookShareButton url={shareUrl}>
+                        <FacebookIcon size={32} round />
+                    </FacebookShareButton>
+                    <TwitterShareButton url={shareUrl}>
+                        <TwitterIcon size={32} round />
+                    </TwitterShareButton>
+                </div>
+            </Card.Body>
+        </Card>
+    );
 };
 
-// Main AppMedia component
 const AppMedia = () => {
   const [mediaEntries, setMediaEntries] = useState([]);
+  const navigate = useNavigate();
   const formikRef = useRef();
 
-  const handleSubmit = (values, { resetForm }) => {
-    const newEntry = { ...values };
-    setMediaEntries([newEntry, ...mediaEntries]);
-    resetForm();
-  };
+  useEffect(() => {
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+          navigate('/login');
+          return;
+      }
+
+      axios.get(`${apiUrl}/media`, { 
+          headers: { Authorization: `Bearer ${token}` } 
+      })
+      .then(response => {
+          // Assuming the response contains an array of media objects
+          setMediaEntries(response.data);
+      })
+      .catch(error => {
+          console.error('Error fetching media:', error);
+          if (error.response && error.response.status === 401) {
+              navigate('/login');
+          }
+        });
+    }, [navigate]);
+
+    const handleSubmit = async (values, { resetForm }) => {
+        const token = sessionStorage.getItem('token');
+        if (!token) {
+            navigate('/login');
+            return;
+        }
+
+        const formData = new FormData();
+        if (values.media) {
+            for (let i = 0; i < values.media.length; i++) {
+                formData.append('media', values.media[i]);
+            }
+        }
+        formData.append('tripName', values.tripName);
+        formData.append('tags', values.tags);
+        formData.append('notes', values.notes);
+
+        try {
+            const response = await axios.post(`${apiUrl}/media`, formData, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+
+            setMediaEntries([response.data, ...mediaEntries]);
+            resetForm();
+        } catch (error) {
+            console.error('Error submitting media:', error);
+        }
+    };
 
   return (
     <>

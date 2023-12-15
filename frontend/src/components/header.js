@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Container, Nav, Navbar, Form, Button, Modal } from 'react-bootstrap';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import './header.css';
 import logoImage from '../assets/images/logo-icon.png';
 
@@ -8,6 +8,7 @@ export default function AppHeader() {
     const [searchResults, setSearchResults] = useState([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
+    const navigate = useNavigate();
 
     const handleSearchChange = (event) => {
         setSearchTerm(event.target.value);
@@ -16,10 +17,11 @@ export default function AppHeader() {
     const handleSearchSubmit = async (event) => {
         event.preventDefault();
         const apiUrl = `${process.env.REACT_APP_API_URL}/api/search?term=${encodeURIComponent(searchTerm)}`;
-        const token = localStorage.getItem('token');
+        const token = sessionStorage.getItem('token');
 
         if (!token) {
-            // TODO: Handle unauthenticated state, redirect to login or show a message
+            navigate('/login');
+            return;
         }
 
         try {
@@ -59,6 +61,7 @@ export default function AppHeader() {
                     <Navbar.Toggle aria-controls="basic-navbar-nav" />
                     <Navbar.Collapse id="basic-navbar-nav">
                         <Nav className="me-auto">
+                            <Nav.Link as={Link} to="/dashboard">Dashboard</Nav.Link>
                             <Nav.Link as={Link} to="/trips">Trips</Nav.Link>
                             <Nav.Link as={Link} to="/expenses">Expenses</Nav.Link>
                             <Nav.Link as={Link} to="/itinerary">Itinerary</Nav.Link>
