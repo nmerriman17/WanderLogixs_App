@@ -43,12 +43,14 @@ function Itinerary() {
             }
 
             try {
+                console.log(process.env.REACT_APP_API_URL)
                 const response = await fetch(`${process.env.REACT_APP_API_URL}/itinerary`, {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     },
                 });
+                
 
                 if (!response.ok) {
                     if (response.status === 401) {
