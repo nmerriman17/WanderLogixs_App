@@ -1,87 +1,78 @@
 const TripModel = require('../models/tripModel');
-const s3Upload = require('../config/s3Upload');
+const { uploadFileToS3, deleteFileFromS3 } = require('../config/s3Upload');
 
-const getTrips = async (req, res) => {
+exports.getTrips = async (req, res) => {
     try {
         const userId = req.userId;
-        const trips = await TripModel.getAllTrips(userId);
+        const trips = await TripModel.getTripsByUserId(userId);
         res.json(trips);
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error in getTrips:', error);
+        res.status(500).send('Internal Server Error');
     }
 };
 
-const getTripById = async (req, res) => {
+exports.getTrip = async (req, res) => {
     try {
-        const tripId = req.params.id;
+        const { id } = req.params;
         const userId = req.userId;
-        const trip = await TripModel.getTripById(tripId, userId);
-        if (!trip) {
-            return res.status(404).send('Trip not found');
-        }
-        res.json(trip);
+        const trip = await TripModel.getTripById(id, userId);
+        trip ? res.json(trip) : res.status(404).send('Trip not found');
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error in getTrip:', error);
+        res.status(500).send('Internal Server Error');
     }
 };
 
-const createTrip = async (req, res) => {
+exports.createTrip = async (req, res) => {
     try {
         const userId = req.userId;
-        let file = null;
+        let fileKey;
         if (req.file) {
-            file = req.file;
+            const uploadResult = await uploadFileToS3(req.file);
+            fileKey = uploadResult.fileKey;
         }
-        const newTrip = await TripModel.addTrip({ ...req.body, file }, userId);
+        const newTrip = await TripModel.createTrip({ ...req.body, file_key: fileKey }, userId);
         res.status(201).json(newTrip);
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error in createTrip:', error);
+        res.status(500).send('Internal Server Error');
     }
 };
 
-const updateTrip = async (req, res) => {
+exports.updateTrip = async (req, res) => {
     try {
-        const tripId = req.params.id;
+        const { id } = req.params;
         const userId = req.userId;
-        const existingTrip = await TripModel.getTripById(tripId, userId);
-        if (!existingTrip) {
-            return res.status(404).send('Trip not found');
-        }
 
-        let file = null;
+        let fileKey;
         if (req.file) {
-            // Delete existing file from S3
-            if (existingTrip.file_key) {
-                await s3Upload.deleteFileFromS3(existingTrip.file_key);
+            const uploadResult = await uploadFileToS3(req.file);
+            fileKey = uploadResult.fileKey;
+
+            // Optional: Delete the old file from S3
+            const oldTrip = await TripModel.getTripById(id, userId);
+            if (oldTrip && oldTrip.file_key) {
+                await deleteFileFromS3(oldTrip.file_key);
             }
-            file = req.file;
         }
 
-        const updatedTrip = await TripModel.updateTrip(tripId, { ...req.body, file }, userId);
-        res.json(updatedTrip);
+        const updatedTrip = await TripModel.updateTrip(id, { ...req.body, file_key: fileKey }, userId);
+        updatedTrip ? res.json(updatedTrip) : res.status(404).send('Trip not found');
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error in updateTrip:', error);
+        res.status(500).send('Internal Server Error');
     }
 };
 
-const deleteTrip = async (req, res) => {
+exports.deleteTrip = async (req, res) => {
     try {
-        const tripId = req.params.id;
+        const { id } = req.params;
         const userId = req.userId;
-        const trip = await TripModel.getTripById(tripId, userId);
-        if (!trip) {
-            return res.status(404).send('Trip not found');
-        }
-
-        if (trip.file_key) {
-            await s3Upload.deleteFileFromS3(trip.file_key);
-        }
-
-        await TripModel.deleteTrip(tripId, userId);
-        res.status(204).send(); // 204 No Content
+        const deletedTrip = await TripModel.deleteTrip(id, userId);
+        deletedTrip ? res.json(deletedTrip) : res.status(404).send('Trip not found');
     } catch (error) {
-        res.status(500).send(error.message);
+        console.error('Error in deleteTrip:', error);
+        res.status(500).send('Internal Server Error');
     }
 };
-
-module.exports = { getTrips, getTripById, createTrip, updateTrip, deleteTrip };
